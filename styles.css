@@ -6,7 +6,7 @@
     background-color: #c9b458; 
     color: white; 
 }
-.red{ 
+.red, .up, .down { 
     background-color: #d9534f; 
     color: white;
 }

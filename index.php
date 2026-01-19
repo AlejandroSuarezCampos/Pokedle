@@ -96,45 +96,42 @@
             <th>Tipo 2</th>
             <th>Altura</th>
             <th>Peso</th>
+            <th>Etapa</th>
 
         </tr>
     </thead>
-    <tbody>
-        <?php if(!empty($_SESSION["intentos"])){
-
+    <?php if(!empty($_SESSION["intentos"])){
             foreach($_SESSION["intentos"] as $intento){ ?>
-
                 <tr>
-
-                    <td>
-                        <img src='<?= $intento["pokemon"]["sprite"] ?>'/> 
+                    <td><img src='<?= $intento["pokemon"]["sprite"] ?>' height="50"/></td>
+                    
+                    <td class="<?=$intento["resultado"]["nombre"] ? 'green' : ''?>"><?=ucfirst($intento["pokemon"]["nombre"])?></td>
+                    
+                    <td class="<?=$intento["resultado"]["tipo1"]?>"><?=$intento["pokemon"]["tipo1"]?></td>
+                    
+                    <td class="<?= $intento["resultado"]["tipo2"]?>"><?=$intento["pokemon"]["tipo2"] ?? "—"?></td>
+                    
+                    <td class="<?= $intento["resultado"]["altura"]?>"><?=$intento["pokemon"]["altura"]?>m</td>
+                    
+                    <td class="<?=$intento["resultado"]["peso"]?>"><?=$intento["pokemon"]["peso"]?>kg</td>
+                    
+                    <td class="<?=$intento["resultado"]["etapa"]?>">
+                        <?php
+                            $etapaNum = $intento["pokemon"]["etapa"];
+                            if ($etapaNum==1){
+                                echo "1";
+                            }elseif ($etapaNum==2){
+                                echo "2";
+                            }elseif ($etapaNum==3){
+                                echo "3";
+                            }else{
+                                echo "Etapa $etapaNum";
+                            }
+                        ?>
                     </td>
-                    <td class="<?=$intento["resultado"]["nombre"]?>">
-                        <?=ucfirst($intento["pokemon"]["nombre"])?>
-                    </td>
-
-                    <td class="<?=$intento["resultado"]["tipo1"]?>">
-                        <?=$intento["pokemon"]["tipo1"]?>
-                    </td>
-
-                    <td class="<?= $intento["resultado"]["tipo2"]?>">
-                        <?=$intento["pokemon"]["tipo2"] ?? "—"?>
-                    </td>
-
-                    <td class="<?= $intento["resultado"]["altura"]?>">
-                        <?=$intento["pokemon"]["altura"]?>
-                    </td>
-
-                    <td class="<?=$intento["resultado"]["peso"]?>">
-                        <?=$intento["pokemon"]["peso"]?>
-                    </td>
-
                 </tr>
-
         <?php }} ?>
-
-    </tbody>
-</table>
+    </tbody></table>
 
 </body>
 </html>

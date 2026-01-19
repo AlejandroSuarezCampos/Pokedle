@@ -41,7 +41,7 @@ function callAPI($url) {
 //Genera un pokémon aleatorio y devuelve un array con sus datos
 function generarPokemonSecreto(){
 
-    // Si no hay un número de la pokedex (1ª gen) aleatorio en sesión, genera uno
+    // Si no hay un número de la pokedex (1ª gen - 5ª gen) aleatorio en sesión, genera uno
     if(!isset($_SESSION["pokemonAleatorio"])){
 
         $_SESSION["pokemonAleatorio"]=random_int(1, 649);
@@ -86,7 +86,7 @@ function generarPokemonSecreto(){
         $tipo1=$pokemon["types"][0]["type"]["name"];
         $tipo2=$pokemon["types"][1]["type"]["name"] ?? null;  //si no tiene segundo tipo, $tipo2 es null
         $numero=$pokemon["id"];
-
+        $etapaSecreta = getEtapaEvolutiva($_SESSION["pokemonAleatorio"]);
 
         //guarda los datos en un array en sesión
         $_SESSION["pokemonSecreto"]=[
@@ -97,7 +97,8 @@ function generarPokemonSecreto(){
             "tipo1"=>$tipo1,
             "tipo2"=>$tipo2,
             "numero"=>$numero,
-            "sprite"=>$sprite
+            "sprite"=>$sprite,
+            "etapa" => $etapaSecreta
 
         ];
 
@@ -164,7 +165,7 @@ function verError($url){
 
 
 //Función que según el pokemon introducido devuelve sus datos
-//de momento solo pokemons de gen 1 para que nos sea más sencillo
+//de momento solo pokemons de gen 1 hasta gen 5 para que nos sea más sencillo
 function getPokemonData($pokemon) {
 
     $url = "https://pokeapi.co/api/v2/pokemon/" . $pokemon . "/";
@@ -172,12 +173,23 @@ function getPokemonData($pokemon) {
 
     // Error en la API
     if ($response < 0) {
-
         return null;
-
     }
 
     $poke = json_decode($response, true);
+
+    //Obtener información del pokemon
+    $speciesUrl = $poke["species"]["url"];
+    $speciesResponse = callAPI($speciesUrl);
+    $speciesData = json_decode($speciesResponse, true);
+    
+    //Obtener cadena evolutiva
+    $evolutionUrl = $speciesData["evolution_chain"]["url"];
+    $evolutionResponse = callAPI($evolutionUrl);
+    $evolutionData = json_decode($evolutionResponse, true);
+
+    // Determinar etapa evolutiva (forma base=1, primera evolución=2, segunda evolución=3)
+    $etapa = getEtapaEvolutiva($poke["id"]);
 
     return [
 
@@ -187,7 +199,8 @@ function getPokemonData($pokemon) {
         "tipo1"  => $poke["types"][0]["type"]["name"],
         "tipo2"  => $poke["types"][1]["type"]["name"] ?? null,
         "numero" => $poke["id"],
-        "sprite" => getSprite($poke["id"])
+        "sprite" => getSprite($poke["id"]),
+        "etapa"  => $etapa
 
     ];
 
@@ -264,7 +277,8 @@ function compararPokemon($intento, $secreto) {
         "tipo2" => compararTipo($intento["tipo2"],$secreto["tipo2"],$secreto["tipo1"]),
         "altura" => compararNumero($intento["altura"],$secreto["altura"]),
         "peso" => compararNumero($intento["peso"],$secreto["peso"]),
-        "numero" => compararNumero($intento["numero"],$secreto["numero"])
+        "numero" => compararNumero($intento["numero"],$secreto["numero"]),
+        "etapa" => compararNumero($intento["etapa"], $secreto["etapa"])
     ];
 
 }
@@ -278,6 +292,97 @@ function getSprite($idPokedex){
     $sprite=json_decode($respSprite, true);
     return $sprite["sprites"]["front_default"];
 
+}
+
+//Función que obtiene el ID numérico desde una URL de la PokéAPI
+function getIdFromUrl($url){
+    return intval(basename(rtrim($url, "/")));
+    //Elimina la barra final si existe y obtiene el último segmento
+    
+    //Es la solución que me ha dado chatgpt, porque al parecer la / al final de la url hace que se ralle y no devuelva bien la etapa, cuando leas este comentario puedes borrarlo en vrd
+}
+
+//Obtiene los datos de species de un pokémon
+function getPokemonSpecies($pokemonId){
+
+    $speciesUrl="https://pokeapi.co/api/v2/pokemon-species/".$pokemonId."/";
+    $speciesResp=callAPI($speciesUrl);
+
+    //Si hay algún error, devuelve null
+    if($speciesResp<0){
+        return null;
+    }
+
+    return json_decode($speciesResp, true);
+}
+
+
+//Obtiene la cadena evolutiva a partir de los datos de species
+function getEvolutionChain($speciesData){
+
+    if(!isset($speciesData["evolution_chain"]["url"])){
+        return null;
+    }
+
+    $evolutionUrl=$speciesData["evolution_chain"]["url"];
+    $evolutionResp=callAPI($evolutionUrl);
+
+    if($evolutionResp<0){
+        return null;
+    }
+
+    return json_decode($evolutionResp, true);
+}
+
+
+//Busca en la cadena evolutiva la etapa del pokémon (1, 2 o 3)
+function buscarEtapaEnCadena($chain, $pokemonId){
+
+    //Etapa 1, Pokémon base
+    if(getIdFromUrl($chain["species"]["url"])==$pokemonId){
+        return 1;
+    }
+
+    //Etapa 2 y 3
+    foreach($chain["evolves_to"] as $evolution1){
+
+        if(getIdFromUrl($evolution1["species"]["url"])==$pokemonId){
+            return 2;
+        }
+
+        //Etapa 3
+        foreach($evolution1["evolves_to"] as $evolution2){
+            if(getIdFromUrl($evolution2["species"]["url"])==$pokemonId){
+                return 3;
+            }
+        }
+    }
+
+    //Por defecto, etapa básica
+    return 1;
+}
+
+
+//Devuelve la etapa evolutiva del pokémon (1, 2 o 3)
+function getEtapaEvolutiva($pokemonId){
+
+    //Obtener datos del pokemon (species)
+    $speciesData=getPokemonSpecies($pokemonId);
+
+    //Si hay algún error asume que está en etapa básica
+    if($speciesData==null){
+        return 1;
+    }
+
+    //Obtener cadena evolutiva
+    $evolutionData=getEvolutionChain($speciesData);
+
+    if($evolutionData==null){
+        return 1;
+    }
+
+    //Buscar etapa en la cadena evolutiva
+    return buscarEtapaEnCadena($evolutionData["chain"], $pokemonId);
 }
 
 
