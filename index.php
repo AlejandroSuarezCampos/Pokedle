@@ -47,6 +47,7 @@
 
     }
 
+
     
 
 ?>
@@ -103,7 +104,7 @@
     <?php if(!empty($_SESSION["intentos"])){
             foreach($_SESSION["intentos"] as $intento){ ?>
                 <tr>
-                    <td><img src='<?= $intento["pokemon"]["sprite"] ?>' height="50"/></td>
+                    <td><img src='<?= $intento["pokemon"]["sprite"] ?>'/></td>
                     
                     <td class="<?=$intento["resultado"]["nombre"] ? 'green' : ''?>"><?=ucfirst($intento["pokemon"]["nombre"])?></td>
                     

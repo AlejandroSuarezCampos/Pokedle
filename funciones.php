@@ -129,6 +129,17 @@ function procesarIntento(){
 
     }else{
 
+        foreach($_SESSION["intentos"] as $intento){
+
+            if(strtolower($intento["pokemon"]["nombre"])==$intentoNombre){
+
+                echo "Ya has introducido ese pokémon";
+                return -1;
+
+            }
+
+        }//Hola
+
         $resultado = compararPokemon($intentoArray,$_SESSION["pokemonSecreto"]);
 
         array_unshift($_SESSION["intentos"],[
@@ -296,10 +307,10 @@ function getSprite($idPokedex){
 
 //Función que obtiene el ID numérico desde una URL de la PokéAPI
 function getIdFromUrl($url){
+
     return intval(basename(rtrim($url, "/")));
     //Elimina la barra final si existe y obtiene el último segmento
     
-    //Es la solución que me ha dado chatgpt, porque al parecer la / al final de la url hace que se ralle y no devuelva bien la etapa, cuando leas este comentario puedes borrarlo en vrd
 }
 
 //Obtiene los datos de species de un pokémon
@@ -310,10 +321,13 @@ function getPokemonSpecies($pokemonId){
 
     //Si hay algún error, devuelve null
     if($speciesResp<0){
+
         return null;
+
     }
 
     return json_decode($speciesResp, true);
+
 }
 
 
@@ -366,7 +380,7 @@ function buscarEtapaEnCadena($chain, $pokemonId){
 //Devuelve la etapa evolutiva del pokémon (1, 2 o 3)
 function getEtapaEvolutiva($pokemonId){
 
-    //Obtener datos del pokemon (species)
+    //Obtener datos del pokemon
     $speciesData=getPokemonSpecies($pokemonId);
 
     //Si hay algún error asume que está en etapa básica
