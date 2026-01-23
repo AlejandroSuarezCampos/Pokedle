@@ -138,7 +138,7 @@ function procesarIntento(){
 
             }
 
-        }//Hola
+        }
 
         $resultado = compararPokemon($intentoArray,$_SESSION["pokemonSecreto"]);
 
@@ -260,7 +260,7 @@ function compararNumero($intento, $secreto) {
 
     if($intento==$secreto){ 
 
-        return "green"; //wazaaaaaa 
+        return "green"; //wazaaaaaaaaaa 
 
     }
 
